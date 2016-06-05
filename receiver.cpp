@@ -12,6 +12,7 @@
 #include <string>
 #include <boost/asio.hpp>
 #include "boost/bind.hpp"
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 const short multicast_port = 30001;
 
@@ -21,7 +22,7 @@ public:
   receiver(boost::asio::io_service& io_service,
       const boost::asio::ip::address& listen_address,
       const boost::asio::ip::address& multicast_address)
-    : socket_(io_service)
+    : socket_(io_service), mPacketCount(0), timer_(io_service)
   {
     // Create the socket so that multiple may be bound to the same address.
     boost::asio::ip::udp::endpoint listen_endpoint(
@@ -39,6 +40,8 @@ public:
         boost::bind(&receiver::handle_receive_from, this,
           boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
+    timer_.expires_from_now(boost::posix_time::seconds(5));
+    timer_.async_wait(boost::bind(&receiver::close, this));
   }
 
   void handle_receive_from(const boost::system::error_code& error,
@@ -46,15 +49,31 @@ public:
   {
     if (!error)
     {
+      //timer_.cancel();
       std::cout.write(data_, bytes_recvd);
       std::cout << std::endl;
+      mPacketCount++;
 
       socket_.async_receive_from(
           boost::asio::buffer(data_, max_length), sender_endpoint_,
           boost::bind(&receiver::handle_receive_from, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
+      timer_.expires_from_now(boost::posix_time::seconds(5));
+      timer_.async_wait(boost::bind(&receiver::close, this));
+    } else {
+        std::cerr << error << std::endl;
+        std::cerr << "packet count: " << mPacketCount << std::endl;
     }
+  }
+
+  void close()
+  {
+      if (timer_.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
+          std::cout << "time out, packet count: " << mPacketCount << std::endl;
+          std::cout << "close socket" << std::endl;
+          socket_.close();
+      }
   }
 
 private:
@@ -62,6 +81,8 @@ private:
   boost::asio::ip::udp::endpoint sender_endpoint_;
   enum { max_length = 1024 };
   char data_[max_length];
+  boost::asio::deadline_timer timer_;
+  int mPacketCount;
 };
 
 int main(int argc, char* argv[])
