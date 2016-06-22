@@ -27,7 +27,8 @@ public:
           socket_(io_service, endpoint_.protocol()),
           timer_(io_service),
           message_count_(0),
-          _packet_size(packet_size) {
+          _packet_size(packet_size)
+    {
         std::ostringstream os;
         os << "Message " << message_count_++;
         message_ = os.str();
@@ -41,7 +42,8 @@ public:
                         boost::asio::placeholders::error));
     }
 
-    void handle_send_to(const boost::system::error_code& error) {
+    void handle_send_to(const boost::system::error_code& error)
+    {
         if (!error && message_count_ < max_message_count) {
             timer_.expires_from_now(boost::posix_time::milliseconds(33));
             timer_.async_wait(
@@ -52,7 +54,8 @@ public:
         }
     }
 
-    void handle_timeout(const boost::system::error_code& error) {
+    void handle_timeout(const boost::system::error_code& error)
+    {
         if (!error) {
             std::ostringstream os;
             os << "Message " << message_count_++;
