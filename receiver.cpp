@@ -40,7 +40,7 @@ public:
         boost::bind(&receiver::handle_receive_from, this,
           boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
-    timer_.expires_from_now(boost::posix_time::seconds(5));
+    timer_.expires_from_now(boost::posix_time::seconds(20));
     timer_.async_wait(boost::bind(&receiver::close, this));
   }
 
@@ -50,7 +50,8 @@ public:
     if (!error)
     {
       //timer_.cancel();
-      std::cout.write(data_, bytes_recvd);
+      std::cout.write(data_, bytes_recvd>32?32:bytes_recvd);
+      std::cout << bytes_recvd;
       std::cout << std::endl;
       mPacketCount++;
 
@@ -59,10 +60,10 @@ public:
           boost::bind(&receiver::handle_receive_from, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
-      timer_.expires_from_now(boost::posix_time::seconds(5));
+      timer_.expires_from_now(boost::posix_time::seconds(20));
       timer_.async_wait(boost::bind(&receiver::close, this));
     } else {
-        std::cerr << error << std::endl;
+        std::cerr << error.message() << std::endl;
         std::cerr << "packet count: " << mPacketCount << std::endl;
     }
   }
@@ -79,7 +80,7 @@ public:
 private:
   boost::asio::ip::udp::socket socket_;
   boost::asio::ip::udp::endpoint sender_endpoint_;
-  enum { max_length = 1024 };
+  enum { max_length = 65536 };
   char data_[max_length];
   boost::asio::deadline_timer timer_;
   int mPacketCount;
@@ -112,4 +113,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-
