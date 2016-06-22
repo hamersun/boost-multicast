@@ -31,17 +31,12 @@ public:
         std::ostringstream os;
         os << "Message " << message_count_++;
         message_ = os.str();
-//    std::ostream request_stream(&request_);
         message_buf = (char*)malloc(_packet_size);
         memset(message_buf, '-', _packet_size);
-//    memcpy(message_buf, message_.c_str(), message_.length());
-        message_.append(message_buf, _packet_size);
-//    request_stream.write(message_buf, 200*1024);
-//    boost::asio::streambuf::mutable_buffers_type mutableBuffer =
-//              request_.prepare(200*1024);
+        memcpy(message_buf, message_.c_str(), message_.length());
 
         socket_.async_send_to(
-            boost::asio::buffer(message_), endpoint_,
+            boost::asio::buffer(message_buf, _packet_size), endpoint_,
             boost::bind(&sender::handle_send_to, this,
                         boost::asio::placeholders::error));
     }
@@ -62,15 +57,10 @@ public:
             std::ostringstream os;
             os << "Message " << message_count_++;
             message_ = os.str();
-//      std::ostream request_stream(&request_);
-//      memcpy(message_buf, message_.c_str(), message_.length());
-//      request_stream.write(message_buf, 200*1024);
-//      boost::asio::streambuf::mutable_buffers_type mutableBuffer =
-//            request_.prepare(200*1024);
-            message_.append(message_buf, _packet_size);
+            memcpy(message_buf, message_.c_str(), message_.length());
 
             socket_.async_send_to(
-                boost::asio::buffer(message_), endpoint_,
+                boost::asio::buffer(message_buf, _packet_size), endpoint_,
                 boost::bind(&sender::handle_send_to, this,
                             boost::asio::placeholders::error));
         }
@@ -84,7 +74,6 @@ private:
     std::string message_;
     int _packet_size;
     char *message_buf;
-//  boost::asio::streambuf request_;
 };
 
 int main(int argc, char* argv[])
